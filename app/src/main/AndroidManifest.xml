@@ -10,7 +10,19 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.PokéMontty"
-        tools:targetApi="31" />
+        android:theme="@style/Poke"
+        tools:targetApi="31">
+        <activity
+            android:name=".ui.feature.splash.SplashActivity"
+            android:exported="true"
+            android:theme="@style/Poke.Splash">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".ui.feature.main.MainActivity" />
+        <activity android:name=".ui.feature.selection.SelectionActivity" />
+    </application>
 
 </manifest>
