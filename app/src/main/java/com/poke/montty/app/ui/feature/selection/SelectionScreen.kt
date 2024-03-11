@@ -1,49 +1,42 @@
 package com.poke.montty.app.ui.feature.selection
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.lerp
 import com.poke.montty.app.R
 import com.poke.montty.app.ui.components.PokeButton
 import com.poke.montty.app.ui.components.PokeToolbar
 import com.poke.montty.app.ui.theme.PokeSetUp
 import com.poke.montty.app.ui.theme.PokeTheme
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.poke.montty.app.ui.theme.PokemonTheme
+import kotlin.math.absoluteValue
 
 @Preview
 @Composable
@@ -53,103 +46,111 @@ fun SelectionScreenPreview() {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SelectionScreen() {
     Scaffold(
         topBar = {
-            PokeToolbar()
+            PokeToolbar(
+                title = "Selecciona un pokemon"
+            )
         },
         bottomBar = {
             PokeButton(text = "OK")
         }
     ) {
 
-        LazyColumn(
-            modifier = Modifier
-                .padding(it)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
 
-            item {
-                Text(
-                    modifier = Modifier.padding(15.dp),
-                    text = "Selecciona un pokemon",
-                    fontSize = 30.sp
-                )
+        val pokes = listOf(
+            Pair(PokeTheme.PIKACHU, R.drawable.pikachu),
+            Pair(PokeTheme.SQUIRTLE, R.drawable.squirtle),
+            Pair(PokeTheme.BULBASAUR, R.drawable.bulbasaur)
+        )
+
+        val pagerState = rememberPagerState(pageCount = {
+            pokes.size
+        })
+
+        LaunchedEffect(pagerState) {
+            snapshotFlow { pagerState.currentPage }.collect { page ->
+                PokeSetUp.setPokeTheme(pokes[page].first)
+            }
+        }
+
+        Box(modifier = Modifier.fillMaxSize()) {
+
+            HorizontalPager(
+                modifier = Modifier
+                    .padding(it)
+                    .fillMaxSize(),
+                state = pagerState
+            ) { page ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            // Calculate the absolute offset for the current page from the
+                            // scroll position. We use the absolute value which allows us to mirror
+                            // any effects for both directions
+                            val pageOffset = (
+                                    (pagerState.currentPage - page) + pagerState
+                                        .currentPageOffsetFraction
+                                    ).absoluteValue
+
+                            // We animate the alpha, between 10% and 100%
+                            alpha = lerp(
+                                start = 0.1f,
+                                stop = 1f,
+                                fraction = 1f - pageOffset.coerceIn(0f, 1f)
+                            )
+                        }
+                ) {
+                    chosePoke(
+                        modifier = Modifier.align(Alignment.Center),
+                        resource = pokes[page].second
+                    )
+                }
             }
 
-            item {
-                chosePoke(
-                    theme = PokeTheme.PIKACHU,
-                    resource = R.drawable.pikachu
-                )
-            }
-
-            item {
-                chosePoke(
-                    theme = PokeTheme.SQUIRTLE,
-                    resource = R.drawable.squirtle
-                )
-            }
-
-            item {
-                chosePoke(
-                    theme = PokeTheme.BULBASAUR,
-                    resource = R.drawable.bulbasaur
-                )
+            Row(
+                Modifier
+                    .height(100.dp)
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                repeat(pagerState.pageCount) { iteration ->
+                    val color =
+                        if (pagerState.currentPage == iteration) PokemonTheme.colors.primary else Color.White
+                    Box(
+                        modifier = Modifier
+                            .padding(2.dp)
+                            .clip(CircleShape)
+                            .background(color)
+                            .border(3.dp, Color.Black, CircleShape)
+                            .size(20.dp)
+                    )
+                }
             }
 
         }
-    }
 
+
+    }
 }
 
 @Composable
 fun chosePoke(
-    theme: PokeTheme,
+    modifier: Modifier,
     resource: Int
 ) {
-    val width = 180.dp
-    var expanded by remember { mutableStateOf(false) }
-
-
-    var visible by remember { mutableStateOf(false) }
-    val density = LocalDensity.current
-
-    CoroutineScope(Dispatchers.Default).launch {
-        // Simulate loading data
-        delay(500)
-
-        // Update data on the main thread
-        withContext(Dispatchers.Main) {
-            visible = true
-        }
-    }
-
-    AnimatedVisibility(
-        visible = visible,
-        enter =  fadeIn(
-            initialAlpha = 0.0f
-        )
-    ) {
-        Image(
-            modifier = Modifier
-                .animateContentSize()
-                .width(if (expanded) 230.dp else width)
-                .height(if (expanded) 230.dp else width)
-                .padding(horizontal = 20.dp)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    PokeSetUp.setPokeTheme(theme)
-                    expanded = !expanded
-                },
-            painter = painterResource(id = resource),
-            contentDescription = "Pikachu"
-        )
-    }
-
-
+    Image(
+        modifier = modifier
+            .animateContentSize()
+            .width(300.dp)
+            .height(300.dp),
+        painter = painterResource(id = resource),
+        contentDescription = "Pikachu"
+    )
 }
