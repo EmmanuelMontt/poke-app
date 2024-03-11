@@ -7,4 +7,11 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="tangerine_yellow">#FFCC01</color>
+    <color name="blue">#075898</color>
+
+    <!--
+    https://www.color-name.com/
+    https://www.figma.com/community/plugin/1034969338659738588/material-theme-builder
+    -->
 </resources>
